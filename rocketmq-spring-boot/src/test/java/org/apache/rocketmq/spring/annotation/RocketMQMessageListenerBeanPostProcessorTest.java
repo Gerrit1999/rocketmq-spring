@@ -19,7 +19,7 @@ package org.apache.rocketmq.spring.annotation;
 
 import org.apache.rocketmq.spring.autoconfigure.RocketMQAutoConfiguration;
 import org.apache.rocketmq.spring.core.RocketMQListener;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
@@ -29,15 +29,15 @@ import org.springframework.context.annotation.Configuration;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-public class RocketMQMessageListenerBeanPostProcessorTest {
+class RocketMQMessageListenerBeanPostProcessorTest {
 
     private static final String TEST_CLASS_SIMPLE_NAME = "Receiver";
 
-    private ApplicationContextRunner runner = new ApplicationContextRunner()
+    private final ApplicationContextRunner runner = new ApplicationContextRunner()
             .withConfiguration(AutoConfigurations.of(RocketMQAutoConfiguration.class));
 
     @Test
-    public void testAnnotationEnhancer() {
+    void testAnnotationEnhancer() {
         runner.withPropertyValues("rocketmq.name-server=127.0.0.1:9876").
                 withUserConfiguration(TestAnnotationEnhancerConfig.class, TestReceiverConfig.class).
                 run((context) -> {
@@ -52,8 +52,7 @@ public class RocketMQMessageListenerBeanPostProcessorTest {
         @Bean
         public RocketMQMessageListenerBeanPostProcessor.AnnotationEnhancer consumeContainerEnhancer() {
             return (attrs, element) -> {
-                if (element instanceof Class) {
-                    Class targetClass = (Class) element;
+                if (element instanceof Class targetClass) {
                     String classSimpleName = targetClass.getSimpleName();
                     if (TEST_CLASS_SIMPLE_NAME.equals(classSimpleName)) {
                         String consumerGroup = "Receiver-Custom-Consumer-Group";

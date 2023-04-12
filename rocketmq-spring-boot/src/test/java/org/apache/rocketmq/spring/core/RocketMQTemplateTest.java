@@ -16,9 +16,7 @@
  */
 package org.apache.rocketmq.spring.core;
 
-import java.util.ArrayList;
-import java.util.List;
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import org.apache.rocketmq.client.AccessChannel;
 import org.apache.rocketmq.client.producer.SendCallback;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -26,16 +24,18 @@ import org.apache.rocketmq.client.producer.TransactionMQProducer;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.spring.annotation.RocketMQTransactionListener;
 import org.apache.rocketmq.spring.autoconfigure.RocketMQAutoConfiguration;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.MessagingException;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -45,16 +45,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(properties = {
-    "rocketmq.nameServer=127.0.0.1:9876", "rocketmq.producer.group=rocketMQTemplate-test-producer_group",
-    "test.rocketmq.topic=test", "rocketmq.producer.access-key=test-ak",
-    "rocketmq.producer.secret-key=test-sk", "rocketmq.accessChannel=LOCAL",
-    "rocketmq.producer.sendMessageTimeout= 3500", "rocketmq.producer.retryTimesWhenSendFailed=3",
-    "rocketmq.producer.retryTimesWhenSendAsyncFailed=3",
-    "rocketmq.pull-consumer.group=spring_rocketmq", "rocketmq.pull-consumer.topic=test"}, classes = {RocketMQAutoConfiguration.class, TransactionListenerImpl.class})
+        "rocketmq.nameServer=127.0.0.1:9876", "rocketmq.producer.group=rocketMQTemplate-test-producer_group",
+        "test.rocketmq.topic=test", "rocketmq.producer.access-key=test-ak",
+        "rocketmq.producer.secret-key=test-sk", "rocketmq.accessChannel=LOCAL",
+        "rocketmq.producer.sendMessageTimeout= 3500", "rocketmq.producer.retryTimesWhenSendFailed=3",
+        "rocketmq.producer.retryTimesWhenSendAsyncFailed=3",
+        "rocketmq.pull-consumer.group=spring_rocketmq", "rocketmq.pull-consumer.topic=test"}, classes = {RocketMQAutoConfiguration.class, TransactionListenerImpl.class})
+class RocketMQTemplateTest {
 
-public class RocketMQTemplateTest {
     @Resource
     RocketMQTemplate rocketMQTemplate;
 
@@ -68,7 +68,7 @@ public class RocketMQTemplateTest {
     String objectRequestTopic;
 
     @Test
-    public void testSendMessage() {
+    void testSendMessage() {
         try {
             rocketMQTemplate.syncSend(topic, "payload");
         } catch (MessagingException e) {
@@ -77,11 +77,13 @@ public class RocketMQTemplateTest {
 
         try {
             rocketMQTemplate.asyncSend(topic, "payload", new SendCallback() {
-                @Override public void onSuccess(SendResult sendResult) {
+                @Override
+                public void onSuccess(SendResult sendResult) {
 
                 }
 
-                @Override public void onException(Throwable e) {
+                @Override
+                public void onException(Throwable e) {
 
                 }
             });
@@ -101,19 +103,22 @@ public class RocketMQTemplateTest {
             assertThat(e).hasMessageContaining("org.apache.rocketmq.remoting.exception.RemotingConnectException: connect to null failed");
         }
     }
+
     @Test
-    public void testAsyncBatchSendMessage() {
+    void testAsyncBatchSendMessage() {
         List<Message> messages = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             messages.add(MessageBuilder.withPayload("payload" + i).build());
         }
         try {
             rocketMQTemplate.asyncSend(topic, messages, new SendCallback() {
-                @Override public void onSuccess(SendResult sendResult) {
+                @Override
+                public void onSuccess(SendResult sendResult) {
 
                 }
 
-                @Override public void onException(Throwable e) {
+                @Override
+                public void onException(Throwable e) {
 
                 }
             });
@@ -123,7 +128,7 @@ public class RocketMQTemplateTest {
     }
 
     @Test
-    public void testReceiveMessage() {
+    void testReceiveMessage() {
         try {
             rocketMQTemplate.receive(String.class);
         } catch (MessagingException e) {
@@ -132,29 +137,31 @@ public class RocketMQTemplateTest {
     }
 
     @Test
-    public void testSendMessage_withCustomAsyncSenderExecutor() {
+    void testSendMessage_withCustomAsyncSenderExecutor() {
         ExecutorService executorService = new ThreadPoolExecutor(
-            2,
-            5,
-            100,
-            TimeUnit.SECONDS,
-            new ArrayBlockingQueue<Runnable>(2000),
-            new ThreadFactory() {
-                private AtomicInteger threadIndex = new AtomicInteger(0);
+                2,
+                5,
+                100,
+                TimeUnit.SECONDS,
+                new ArrayBlockingQueue<>(2000),
+                new ThreadFactory() {
+                    private final AtomicInteger threadIndex = new AtomicInteger(0);
 
-                @Override
-                public Thread newThread(Runnable r) {
-                    return new Thread(r, "AsyncSenderExecutor_" + this.threadIndex.incrementAndGet());
-                }
-            });
+                    @Override
+                    public Thread newThread(Runnable r) {
+                        return new Thread(r, "AsyncSenderExecutor_" + this.threadIndex.incrementAndGet());
+                    }
+                });
         rocketMQTemplate.setAsyncSenderExecutor(executorService);
         try {
             rocketMQTemplate.asyncSend(topic, "payload", new SendCallback() {
-                @Override public void onSuccess(SendResult sendResult) {
+                @Override
+                public void onSuccess(SendResult sendResult) {
 
                 }
 
-                @Override public void onException(Throwable e) {
+                @Override
+                public void onException(Throwable e) {
 
                 }
             });
@@ -164,14 +171,16 @@ public class RocketMQTemplateTest {
     }
 
     @Test
-    public void testSendAndReceive_NullMessage() {
+    void testSendAndReceive_NullMessage() {
         try {
             String response = rocketMQTemplate.sendAndReceive(stringRequestTopic, new Message<String>() {
-                @Override public String getPayload() {
+                @Override
+                public String getPayload() {
                     return null;
                 }
 
-                @Override public MessageHeaders getHeaders() {
+                @Override
+                public MessageHeaders getHeaders() {
                     return null;
                 }
             }, String.class);
@@ -187,7 +196,7 @@ public class RocketMQTemplateTest {
     }
 
     @Test
-    public void testSendAndReceive_Sync() {
+    void testSendAndReceive_Sync() {
         try {
             String responseMessage = rocketMQTemplate.sendAndReceive(stringRequestTopic, MessageBuilder.withPayload("requestTopicSync").build(), String.class);
             assertThat(responseMessage).isNotNull();
@@ -204,14 +213,16 @@ public class RocketMQTemplateTest {
     }
 
     @Test
-    public void testSendAndReceive_Async() {
+    void testSendAndReceive_Async() {
         try {
             rocketMQTemplate.sendAndReceive(stringRequestTopic, MessageBuilder.withPayload("requestTopicASync").build(), new RocketMQLocalRequestCallback<String>() {
-                @Override public void onSuccess(String message) {
+                @Override
+                public void onSuccess(String message) {
                     System.out.printf("receive string: %s %n", message);
                 }
 
-                @Override public void onException(Throwable e) {
+                @Override
+                public void onException(Throwable e) {
                     e.printStackTrace();
                 }
             });
@@ -221,11 +232,13 @@ public class RocketMQTemplateTest {
 
         try {
             rocketMQTemplate.sendAndReceive(stringRequestTopic, "requestTopicAsyncWithHasKey", new RocketMQLocalRequestCallback<String>() {
-                @Override public void onSuccess(String message) {
+                @Override
+                public void onSuccess(String message) {
                     System.out.printf("receive string: %s %n", message);
                 }
 
-                @Override public void onException(Throwable e) {
+                @Override
+                public void onException(Throwable e) {
                     e.printStackTrace();
                 }
             }, "order-id");
@@ -235,11 +248,13 @@ public class RocketMQTemplateTest {
 
         try {
             rocketMQTemplate.sendAndReceive(stringRequestTopic, "requestTopicAsyncWithTimeout", new RocketMQLocalRequestCallback<String>() {
-                @Override public void onSuccess(String message) {
+                @Override
+                public void onSuccess(String message) {
                     System.out.printf("receive string: %s %n", message);
                 }
 
-                @Override public void onException(Throwable e) {
+                @Override
+                public void onException(Throwable e) {
                     e.printStackTrace();
                 }
             }, "order-id", 5000);
@@ -248,11 +263,13 @@ public class RocketMQTemplateTest {
         }
         try {
             rocketMQTemplate.sendAndReceive(objectRequestTopic, "requestTopicAsyncWithTimeout", new RocketMQLocalRequestCallback<MessageExt>() {
-                @Override public void onSuccess(MessageExt message) {
+                @Override
+                public void onSuccess(MessageExt message) {
                     System.out.printf("receive messageExt: %s %n", message.toString());
                 }
 
-                @Override public void onException(Throwable e) {
+                @Override
+                public void onException(Throwable e) {
                     e.printStackTrace();
                 }
             }, 5000);
@@ -262,7 +279,7 @@ public class RocketMQTemplateTest {
     }
 
     @Test
-    public void testProperties() {
+    void testProperties() {
         assertThat(rocketMQTemplate.getProducer().getNamesrvAddr()).isEqualTo("127.0.0.1:9876");
         assertThat(rocketMQTemplate.getProducer().getProducerGroup()).isEqualTo("rocketMQTemplate-test-producer_group");
         assertThat(rocketMQTemplate.getProducer().getAccessChannel()).isEqualTo(AccessChannel.LOCAL);
@@ -278,7 +295,7 @@ public class RocketMQTemplateTest {
     }
 
     @Test
-    public void testTransactionListener() {
+    void testTransactionListener() {
         assertThat(((TransactionMQProducer) rocketMQTemplate.getProducer()).getTransactionListener()).isNotNull();
     }
 }

@@ -17,11 +17,6 @@
 
 package org.apache.rocketmq.spring.autoconfigure;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -36,8 +31,7 @@ import org.apache.rocketmq.spring.core.RocketMQLocalTransactionState;
 import org.apache.rocketmq.spring.core.RocketMQReplyListener;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.apache.rocketmq.spring.support.RocketMQMessageConverter;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
@@ -46,42 +40,51 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.GenericMessage;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class RocketMQAutoConfigurationTest {
-    private ApplicationContextRunner runner = new ApplicationContextRunner()
-        .withConfiguration(AutoConfigurations.of(RocketMQAutoConfiguration.class));
+class RocketMQAutoConfigurationTest {
+    private final ApplicationContextRunner runner = new ApplicationContextRunner()
+            .withConfiguration(AutoConfigurations.of(RocketMQAutoConfiguration.class));
 
-    @Test(expected = NoSuchBeanDefinitionException.class)
-    public void testDefaultMQProducerNotCreatedByDefault() {
+    @Test
+    void testDefaultMQProducerNotCreatedByDefault() {
         // You will see the WARN log message about missing rocketmq.name-server spring property when running this test case.
-        runner.run(context -> context.getBean(DefaultMQProducer.class));
-    }
-
-    @Test(expected = NoSuchBeanDefinitionException.class)
-    public void testDefaultLitePullConsumerNotCreatedByDefault() {
-        // You will see the WARN log message about missing rocketmq.name-server spring property when running this test case.
-        runner.run(context -> context.getBean(DefaultLitePullConsumer.class));
+        assertThrows(NoSuchBeanDefinitionException.class,
+                () -> runner.run(context -> context.getBean(DefaultMQProducer.class)));
     }
 
     @Test
-    public void testDefaultMQProducerWithRelaxPropertyName() {
+    void testDefaultLitePullConsumerNotCreatedByDefault() {
+        // You will see the WARN log message about missing rocketmq.name-server spring property when running this test case.
+        assertThrows(NoSuchBeanDefinitionException.class,
+                () -> runner.run(context -> context.getBean(DefaultLitePullConsumer.class)));
+    }
+
+    @Test
+    void testDefaultMQProducerWithRelaxPropertyName() {
         runner.withPropertyValues("rocketmq.nameServer=127.0.0.1:9876",
-            "rocketmq.producer.group=spring_rocketmq",
-            "rocketmq.accessChannel=LOCAL").
-            run((context) -> {
-                assertThat(context).hasSingleBean(DefaultMQProducer.class);
-                assertThat(context).hasSingleBean(RocketMQProperties.class);
-            });
+                        "rocketmq.producer.group=spring_rocketmq",
+                        "rocketmq.accessChannel=LOCAL").
+                run((context) -> {
+                    assertThat(context).hasSingleBean(DefaultMQProducer.class);
+                    assertThat(context).hasSingleBean(RocketMQProperties.class);
+                });
 
     }
 
     @Test
-    public void testDefaultLitePullConsumerWithRelaxPropertyName() {
+    void testDefaultLitePullConsumerWithRelaxPropertyName() {
         runner.withPropertyValues("rocketmq.nameServer=127.0.0.1:9876",
-                "rocketmq.pull-consumer.group=spring_rocketmq",
-                "rocketmq.pull-consumer.topic=test",
-                "rocketmq.accessChannel=LOCAL").
+                        "rocketmq.pull-consumer.group=spring_rocketmq",
+                        "rocketmq.pull-consumer.topic=test",
+                        "rocketmq.accessChannel=LOCAL").
                 run((context) -> {
                     assertThat(context).hasSingleBean(DefaultLitePullConsumer.class);
                     assertThat(context).hasSingleBean(RocketMQProperties.class);
@@ -90,19 +93,19 @@ public class RocketMQAutoConfigurationTest {
     }
 
     @Test
-    public void testBadAccessChannelProperty() {
+    void testBadAccessChannelProperty() {
         runner.withPropertyValues("rocketmq.nameServer=127.0.0.1:9876",
-            "rocketmq.producer.group=spring_rocketmq",
-            "rocketmq.accessChannel=LOCAL123").
-            run((context) -> {
-                //Should throw exception for bad accessChannel property
-                assertThat(context).getFailure();
-            });
+                        "rocketmq.producer.group=spring_rocketmq",
+                        "rocketmq.accessChannel=LOCAL123").
+                run((context) -> {
+                    //Should throw exception for bad accessChannel property
+                    assertThat(context).getFailure();
+                });
 
         runner.withPropertyValues("rocketmq.nameServer=127.0.0.1:9876",
-                "rocketmq.pull-consumer.group=spring_rocketmq",
-                "rocketmq.pull-consumer.topic=test",
-                "rocketmq.accessChannel=LOCAL123").
+                        "rocketmq.pull-consumer.group=spring_rocketmq",
+                        "rocketmq.pull-consumer.topic=test",
+                        "rocketmq.accessChannel=LOCAL123").
                 run((context) -> {
                     //Should throw exception for bad accessChannel property
                     assertThat(context).getFailure();
@@ -110,140 +113,129 @@ public class RocketMQAutoConfigurationTest {
     }
 
     @Test
-    public void testDefaultMQProducer() {
+    void testDefaultMQProducer() {
         runner.withPropertyValues("rocketmq.name-server=127.0.0.1:9876",
-            "rocketmq.producer.group=spring_rocketmq").
-            run((context) -> {
-                assertThat(context).hasSingleBean(DefaultMQProducer.class);
-            });
+                        "rocketmq.producer.group=spring_rocketmq").
+                run((context) -> assertThat(context).hasSingleBean(DefaultMQProducer.class));
     }
 
     @Test
-    public void testDefaultLitePullConsumer() {
+    void testDefaultLitePullConsumer() {
         runner.withPropertyValues("rocketmq.name-server=127.0.0.1:9876",
-                "rocketmq.pull-consumer.group=spring_rocketmq",
-                "rocketmq.pull-consumer.topic=test").
+                        "rocketmq.pull-consumer.group=spring_rocketmq",
+                        "rocketmq.pull-consumer.topic=test").
+                run((context) -> assertThat(context).hasSingleBean(DefaultLitePullConsumer.class));
+    }
+
+    @Test
+    void testExtRocketMQTemplate() {
+        runner.withPropertyValues("rocketmq.name-server=127.0.1.1:9876").
+                withUserConfiguration(TestExtRocketMQTemplateConfig.class, CustomObjectMappersConfig.class).
                 run((context) -> {
-                    assertThat(context).hasSingleBean(DefaultLitePullConsumer.class);
+                    // No producer on consume side
+                    assertThat(context).getBean("extRocketMQTemplate").hasFieldOrProperty("producer");
+                    // Auto-create consume container if existing Bean annotated with @RocketMQMessageListener
                 });
     }
 
-    @Test
-    public void testExtRocketMQTemplate() {
-        runner.withPropertyValues("rocketmq.name-server=127.0.1.1:9876").
-            withUserConfiguration(TestExtRocketMQTemplateConfig.class, CustomObjectMappersConfig.class).
-            run((context) -> {
-                // No producer on consume side
-                assertThat(context).getBean("extRocketMQTemplate").hasFieldOrProperty("producer");
-                // Auto-create consume container if existing Bean annotated with @RocketMQMessageListener
-            });
-    }
-
 
     @Test
-    public void testExtRocketMQConsumer() {
+    void testExtRocketMQConsumer() {
         runner.withPropertyValues("rocketmq.name-server=127.0.1.1:9876").
                 withUserConfiguration(TestExtRocketMQConsumerConfig.class, CustomObjectMappersConfig.class).
+                run((context) -> assertThat(context).getBean("extRocketMQTemplate").hasFieldOrProperty("consumer"));
+    }
+
+    @Test
+    void testConsumerListener() {
+        runner.withPropertyValues("rocketmq.name-server=127.0.0.1:9876",
+                        "rocketmq.producer.group=spring_rocketmq",
+                        "rocketmq.consumer.listeners.spring_rocketmq.FOO_TEST_TOPIC=false",
+                        "rocketmq.consumer.listeners.spring_rocketmq.FOO_TEST_TOPIC2=true").
                 run((context) -> {
-                    assertThat(context).getBean("extRocketMQTemplate").hasFieldOrProperty("consumer");
+                    RocketMQProperties rocketMQProperties = context.getBean(RocketMQProperties.class);
+                    assertThat(rocketMQProperties.getConsumer().getListeners().get("spring_rocketmq").get("FOO_TEST_TOPIC").booleanValue()).isEqualTo(false);
+                    assertThat(rocketMQProperties.getConsumer().getListeners().get("spring_rocketmq").get("FOO_TEST_TOPIC2").booleanValue()).isEqualTo(true);
+                });
+
+    }
+
+    @Test
+    void testRocketMQTransactionListener() {
+        runner.withPropertyValues("rocketmq.name-server=127.0.0.1:9876",
+                        "rocketmq.producer.group=spring_rocketmq",
+                        "demo.rocketmq.transaction.producer.group=transaction-group1").
+                withUserConfiguration(TestTransactionListenerConfig.class).
+                run((context) -> {
+                    assertThat(context).hasSingleBean(TestRocketMQLocalTransactionListener.class);
+                    RocketMQTransactionListener annotation = TestRocketMQLocalTransactionListener.class.getAnnotation(RocketMQTransactionListener.class);
+                    RocketMQTemplate rocketMQTemplate = (RocketMQTemplate) context.getBean(annotation.rocketMQTemplateBeanName());
+                    ThreadPoolExecutor executor = (ThreadPoolExecutor) ((TransactionMQProducer) rocketMQTemplate.getProducer()).getExecutorService();
+                    assertThat(executor.getKeepAliveTime(TimeUnit.SECONDS)).isEqualTo(50);
                 });
     }
 
     @Test
-    public void testConsumerListener() {
+    void testBatchSendMessage() {
         runner.withPropertyValues("rocketmq.name-server=127.0.0.1:9876",
-            "rocketmq.producer.group=spring_rocketmq",
-            "rocketmq.consumer.listeners.spring_rocketmq.FOO_TEST_TOPIC=false",
-            "rocketmq.consumer.listeners.spring_rocketmq.FOO_TEST_TOPIC2=true").
-            run((context) -> {
-                RocketMQProperties rocketMQProperties = context.getBean(RocketMQProperties.class);
-                assertThat(rocketMQProperties.getConsumer().getListeners().get("spring_rocketmq").get("FOO_TEST_TOPIC").booleanValue()).isEqualTo(false);
-                assertThat(rocketMQProperties.getConsumer().getListeners().get("spring_rocketmq").get("FOO_TEST_TOPIC2").booleanValue()).isEqualTo(true);
-            });
+                        "rocketmq.producer.group=spring_rocketmq").
+                run((context) -> {
+                    RocketMQTemplate rocketMQTemplate = context.getBean(RocketMQTemplate.class);
+                    List<GenericMessage<String>> batchMessages = new ArrayList<>();
 
+                    String errorMsg = null;
+                    try {
+                        SendResult customSendResult = rocketMQTemplate.syncSend("test", batchMessages, 60000);
+                    } catch (IllegalArgumentException e) {
+                        // it will be throw IllegalArgumentException: `messages` can not be empty
+                        errorMsg = e.getMessage();
+                    }
+
+                    // that means the rocketMQTemplate.syncSend is chosen the correct type method
+                    assertEquals("`messages` can not be empty", errorMsg);
+                });
+
+    }
+
+    void testPlaceholdersListenerContainer() {
+        runner.withPropertyValues("rocketmq.name-server=127.0.0.1:9876",
+                        "demo.placeholders.consumer.group = abc3",
+                        "demo.placeholders.consumer.topic = test",
+                        "demo.placeholders.consumer.tags = tag1").
+                withUserConfiguration(TestPlaceholdersConfig.class).
+                run((context) -> {
+                    // No producer on consume side
+                    assertThat(context).doesNotHaveBean(DefaultMQProducer.class);
+                    // Auto-create consume container if existing Bean annotated with @RocketMQMessageListener
+                    assertThat(context).hasBean("org.apache.rocketmq.spring.support.DefaultRocketMQListenerContainer_1");
+                    assertThat(context).getBean("org.apache.rocketmq.spring.support.DefaultRocketMQListenerContainer_1").
+                            hasFieldOrPropertyWithValue("nameServer", "127.0.0.1:9876").
+                            hasFieldOrPropertyWithValue("consumerGroup", "abc3").
+                            hasFieldOrPropertyWithValue("topic", "test").
+                            hasFieldOrPropertyWithValue("selectorExpression", "tag1");
+                });
     }
 
     @Test
-    public void testRocketMQTransactionListener() {
-        runner.withPropertyValues("rocketmq.name-server=127.0.0.1:9876",
-            "rocketmq.producer.group=spring_rocketmq",
-            "demo.rocketmq.transaction.producer.group=transaction-group1").
-            withUserConfiguration(TestTransactionListenerConfig.class).
-            run((context) -> {
-                assertThat(context).hasSingleBean(TestRocketMQLocalTransactionListener.class);
-                RocketMQTransactionListener annotation = TestRocketMQLocalTransactionListener.class.getAnnotation(RocketMQTransactionListener.class);
-                RocketMQTemplate rocketMQTemplate = (RocketMQTemplate) context.getBean(annotation.rocketMQTemplateBeanName());
-                ThreadPoolExecutor executor = (ThreadPoolExecutor) ((TransactionMQProducer) rocketMQTemplate.getProducer()).getExecutorService();
-                assertThat(executor.getKeepAliveTime(TimeUnit.SECONDS)).isEqualTo(50);
-            });
-    }
-
-    @Test
-    public void testBatchSendMessage() {
-        runner.withPropertyValues("rocketmq.name-server=127.0.0.1:9876",
-            "rocketmq.producer.group=spring_rocketmq").
-            run((context) -> {
-                RocketMQTemplate rocketMQTemplate = context.getBean(RocketMQTemplate.class);
-                List<GenericMessage<String>> batchMessages = new ArrayList<GenericMessage<String>>();
-
-                String errorMsg = null;
-                try {
-                    SendResult customSendResult = rocketMQTemplate.syncSend("test", batchMessages, 60000);
-                } catch (IllegalArgumentException e) {
-                    // it will be throw IllegalArgumentException: `messages` can not be empty
-                    errorMsg = e.getMessage();
-                }
-
-                // that means the rocketMQTemplate.syncSend is chosen the correct type method
-                Assert.assertEquals("`messages` can not be empty", errorMsg);
-            });
-
-    }
-
-    public void testPlaceholdersListenerContainer() {
-        runner.withPropertyValues("rocketmq.name-server=127.0.0.1:9876",
-            "demo.placeholders.consumer.group = abc3",
-            "demo.placeholders.consumer.topic = test",
-            "demo.placeholders.consumer.tags = tag1").
-            withUserConfiguration(TestPlaceholdersConfig.class).
-            run((context) -> {
-                // No producer on consume side
-                assertThat(context).doesNotHaveBean(DefaultMQProducer.class);
-                // Auto-create consume container if existing Bean annotated with @RocketMQMessageListener
-                assertThat(context).hasBean("org.apache.rocketmq.spring.support.DefaultRocketMQListenerContainer_1");
-                assertThat(context).getBean("org.apache.rocketmq.spring.support.DefaultRocketMQListenerContainer_1").
-                    hasFieldOrPropertyWithValue("nameServer", "127.0.0.1:9876").
-                    hasFieldOrPropertyWithValue("consumerGroup", "abc3").
-                    hasFieldOrPropertyWithValue("topic", "test").
-                    hasFieldOrPropertyWithValue("selectorExpression", "tag1");
-            });
-    }
-
-    @Test
-    public void testRocketMQListenerContainer() {
+    void testRocketMQListenerContainer() {
         runner.withPropertyValues("rocketmq.name-server=127.0.0.1:9876").
-            withUserConfiguration(TestConfig.class).
-            run((context) -> {
-                assertThat(context).getFailure().hasMessageContaining("connect to null failed");
-            });
+                withUserConfiguration(TestConfig.class).
+                run((context) -> assertThat(context).getFailure().hasMessageContaining("connect to null failed"));
     }
 
     @Test
-    public void testRocketMQListenerContainer_RocketMQReplyListener() {
+    void testRocketMQListenerContainer_RocketMQReplyListener() {
         runner.withPropertyValues("rocketmq.name-server=127.0.0.1:9876").
-            withUserConfiguration(TestConfigWithRocketMQReplyListener.class).
-            run((context) -> {
-                assertThat(context).getFailure().hasMessageContaining("connect to null failed");
-            });
+                withUserConfiguration(TestConfigWithRocketMQReplyListener.class).
+                run((context) -> assertThat(context).getFailure().hasMessageContaining("connect to null failed"));
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testRocketMQListenerContainer_WrongRocketMQListenerType() {
-        runner.withPropertyValues("rocketmq.name-server=127.0.0.1:9876").
-            withUserConfiguration(TestConfigWithWrongRocketMQListener.class).
-            run((context) -> {
-                context.getBean(RocketMQMessageConverter.class);
-            });
+    @Test
+    void testRocketMQListenerContainer_WrongRocketMQListenerType() {
+        assertThrows(IllegalStateException.class,
+                () -> runner.withPropertyValues("rocketmq.name-server=127.0.0.1:9876").
+                        withUserConfiguration(TestConfigWithWrongRocketMQListener.class).
+                        run((context) -> context.getBean(RocketMQMessageConverter.class)));
     }
 
     @Configuration

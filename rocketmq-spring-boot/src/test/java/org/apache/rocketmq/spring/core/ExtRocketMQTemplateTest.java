@@ -16,28 +16,24 @@
  */
 package org.apache.rocketmq.spring.core;
 
+import jakarta.annotation.Resource;
 import org.apache.rocketmq.client.producer.TransactionMQProducer;
 import org.apache.rocketmq.spring.annotation.ExtRocketMQConsumerConfiguration;
 import org.apache.rocketmq.spring.annotation.ExtRocketMQTemplateConfiguration;
 import org.apache.rocketmq.spring.annotation.RocketMQTransactionListener;
 import org.apache.rocketmq.spring.autoconfigure.RocketMQAutoConfiguration;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessagingException;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
-import javax.annotation.Resource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(SpringJUnit4ClassRunner.class)
 
 @SpringBootTest(properties = {
-    "rocketmq.nameServer=127.0.0.1:9876", "rocketmq.producer.group=extRocketMQTemplate-test-producer_group"}, classes = {RocketMQAutoConfiguration.class, ExtRocketMQTemplate.class, ExtTransactionListenerImpl.class, ExtRocketMQConsumer.class})
-public class ExtRocketMQTemplateTest {
+        "rocketmq.nameServer=127.0.0.1:9876", "rocketmq.producer.group=extRocketMQTemplate-test-producer_group"}, classes = {RocketMQAutoConfiguration.class, ExtRocketMQTemplate.class, ExtTransactionListenerImpl.class, ExtRocketMQConsumer.class})
+class ExtRocketMQTemplateTest {
 
     @Resource(name = "extRocketMQTemplate")
     private RocketMQTemplate extRocketMQTemplate;
@@ -49,7 +45,7 @@ public class ExtRocketMQTemplateTest {
     private RocketMQTemplate rocketMQTemplate;
 
     @Test
-    public void testProperties() {
+    void testProperties() {
         assertThat(extRocketMQTemplate.getProducer().getNamesrvAddr()).isEqualTo("172.0.0.1:9876");
         assertThat(extRocketMQTemplate.getProducer().getProducerGroup()).isEqualTo("extRocketMQTemplate-test-group");
         assertThat(extRocketMQTemplate.getProducer().getSendMsgTimeout()).isEqualTo(3000);
@@ -61,13 +57,13 @@ public class ExtRocketMQTemplateTest {
     }
 
     @Test
-    public void testTransactionListener() {
+    void testTransactionListener() {
         assertThat(((TransactionMQProducer) extRocketMQTemplate.getProducer()).getTransactionListener()).isNotNull();
         assertThat(((TransactionMQProducer) rocketMQTemplate.getProducer()).getTransactionListener()).isNull();
     }
 
     @Test
-    public void testSendTransactionalMessage() {
+    void testSendTransactionalMessage() {
         try {
             rocketMQTemplate.sendMessageInTransaction("test-topic", MessageBuilder.withPayload("payload").build(), null);
         } catch (IllegalStateException e) {
@@ -77,14 +73,14 @@ public class ExtRocketMQTemplateTest {
         try {
             extRocketMQTemplate.sendMessageInTransaction("test-topic", MessageBuilder.withPayload("payload").build(), null);
         } catch (MessagingException e) {
-            assertThat(e).hasMessageContaining("org.apache.rocketmq.client.exception.MQClientException: send message Exception");
+            assertThat(e).hasMessageContaining("send message Exception");
         }
 
     }
 }
 
 @ExtRocketMQTemplateConfiguration(nameServer = "172.0.0.1:9876", group = "extRocketMQTemplate-test-group",
-    sendMessageTimeout = 3000, maxMessageSize = 4 * 1024)
+        sendMessageTimeout = 3000, maxMessageSize = 4 * 1024)
 class ExtRocketMQTemplate extends RocketMQTemplate {
 
 }
@@ -106,8 +102,3 @@ class ExtTransactionListenerImpl implements RocketMQLocalTransactionListener {
 class ExtRocketMQConsumer extends RocketMQTemplate {
 
 }
-
-
-
-
-

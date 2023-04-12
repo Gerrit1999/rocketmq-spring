@@ -17,6 +17,7 @@
 
 package org.apache.rocketmq.spring.autoconfigure;
 
+import jakarta.annotation.PostConstruct;
 import org.apache.rocketmq.client.AccessChannel;
 import org.apache.rocketmq.client.MQAdmin;
 import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
@@ -49,8 +50,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import javax.annotation.PostConstruct;
-
 @Configuration
 @EnableConfigurationProperties(RocketMQProperties.class)
 @ConditionalOnClass({MQAdmin.class})
@@ -63,7 +62,7 @@ public class RocketMQAutoConfiguration implements ApplicationContextAware {
     private static final Logger log = LoggerFactory.getLogger(RocketMQAutoConfiguration.class);
 
     public static final String ROCKETMQ_TEMPLATE_DEFAULT_GLOBAL_NAME =
-        "rocketMQTemplate";
+            "rocketMQTemplate";
     public static final String PRODUCER_BEAN_NAME = "defaultMQProducer";
     public static final String CONSUMER_BEAN_NAME = "defaultLitePullConsumer";
 
@@ -118,7 +117,7 @@ public class RocketMQAutoConfiguration implements ApplicationContextAware {
         producer.setUseTLS(producerConfig.isTlsEnable());
         producer.setNamespace(producerConfig.getNamespace());
         producer.setInstanceName(producerConfig.getInstanceName());
-        log.info(String.format("a producer (%s) init on namesrv %s",  groupName,nameServer));
+        log.info("a producer ({}) init on namesrv {}", groupName, nameServer);
         return producer;
     }
 
@@ -150,7 +149,7 @@ public class RocketMQAutoConfiguration implements ApplicationContextAware {
         litePullConsumer.setCustomizedTraceTopic(consumerConfig.getCustomizedTraceTopic());
         litePullConsumer.setNamespace(consumerConfig.getNamespace());
         litePullConsumer.setInstanceName(consumerConfig.getInstanceName());
-        log.info(String.format("a pull consumer(%s sub %s) init on namesrv %s",  groupName, topicName,nameServer));
+        log.info("a pull consumer({} sub {}) init on namesrv {}", groupName, topicName, nameServer);
         return litePullConsumer;
     }
 
